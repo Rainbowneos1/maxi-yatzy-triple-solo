@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maxi Yatzy 单机挑战</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #1e2a3a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
+
+        #start-screen,
+        #game-screen {
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        #start-screen {
+            text-align: center;
+            margin-top: 8vh;
+        }
+
+        #start-screen h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            color: #f5d67b;
+            letter-spacing: 2px;
+        }
+
+        #start-screen p {
+            font-size: 1.2rem;
+            margin-bottom: 2.5rem;
+            color: #c0c8d4;
+        }
+
+        .mode-btn {
+            background: #2e4057;
+            border: 2px solid #f5d67b;
+            color: #f5d67b;
+            font-size: 1.3rem;
+            padding: 14px 32px;
+            margin: 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 1px;
+        }
+
+        .mode-btn:hover {
+            background: #f5d67b;
+            color: #1e2a3a;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        #game-screen {
+            display: none;
+        }
+
+        #status-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            background: #243447;
+            padding: 12px 18px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #f0f0f0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        #status-bar span {
+            background: #1e2a3a;
+            padding: 6px 14px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        #dice-and-structure {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 24px;
+            margin: 20px 0 12px;
+            align-items: stretch;
+        }
+
+        #dice-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            flex: 1 1 300px;
+            max-width: 600px;
+        }
+
+        .die {
+            width: 70px;
+            height: 70px;
+            background: #f5f5f5;
+            color: #1e2a3a;
+            font-size: 2rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            border: 3px solid transparent;
+        }
+
+        .die.unrolled {
+            background: #3a4a5f;
+            color: #a0b0c0;
+            cursor: default;
+        }
+
+        .die.kept {
+            border-color: #f5d67b;
+            background: #fff3cc;
+            color: #6b4d00;
+            box-shadow: 0 0 0 4px rgba(245, 214, 123, 0.5);
+        }
+
+        #structure-panel {
+            flex: 0 0 200px;
+            background: #243447;
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            min-height: 70px;
+        }
+
+        #structure-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #f5d67b;
+            text-align: center;
+        }
+
+        #dice-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px;
+            margin: 8px 0 22px;
+        }
+
+        .action-btn {
+            background: #2e6da4;
+            border: none;
+            color: white;
+            font-size: 1.05rem;
+            padding: 12px 22px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-btn:hover:not(:disabled) {
+            background: #1f5a8b;
+            transform: translateY(-1px);
+        }
+
+        .action-btn:disabled {
+            background: #4a5a6a;
+            color: #b0b8c0;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #scoreboards {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 22px;
+            margin-top: 10px;
+            align-items: flex-start;
+        }
+
+        .score-table {
+            background: #243447;
+            border-radius: 16px;
+            border-collapse: separate;
+            border-spacing: 0;
+            overflow: hidden;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+            flex: 1 1 320px;
+            min-width: 280px;
+            max-width: 400px;
+        }
+
+        .score-table caption {
+            font-size: 1.2rem;
+            font-weight: 700;
+            padding: 12px;
+            background: #1e2a3a;
+            color: #f5d67b;
+            letter-spacing: 1px;
+        }
+
+        .score-table th,
+        .score-table td {
+            padding: 8px 10px;
+            text-align: center;
+            border-bottom: 1px solid #34495e;
+            font-size: 0.95rem;
+            white-space: nowrap;
+        }
+
+        .score-table th {
+            background: #2c3e50;
+            font-weight: 600;
+            color: #f0f0f0;
+            font-size: 0.85rem;
+        }
+
+        .score-table .desc {
+            text-align: left;
+            color: #b0bec5;
+            font-size: 0.85rem;
+            white-space: normal;
+        }
+
+        .score-table tr.fillable {
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .score-table tr.fillable:hover {
+            background: #356080;
+        }
+
+        .score-table tr.disabled {
+            cursor: default;
+            opacity: 0.75;
+        }
+
+        .score-table .potential {
+            color: #9acd32;
+            font-style: italic;
+            font-weight: 400;
+        }
+
+        .score-table .summary-row td {
+            background: #2a3a4a;
+            font-weight: 600;
+            color: #e0e0e0;
+            border-bottom: 1px solid #3d5266;
+        }
+
+        .score-table .summary-row.total td {
+            background: #1e2a3a;
+            color: #f5d67b;
+            font-weight: 700;
+            font-size: 1.05rem;
+            border-bottom: none;
+        }
+
+        @media (max-width: 760px) {
+            .die {
+                width: 56px;
+                height: 56px;
+                font-size: 1.6rem;
+            }
+            #status-bar {
+                font-size: 0.95rem;
+                gap: 10px;
+            }
+            .score-table {
+                min-width: 240px;
+                font-size: 0.85rem;
+            }
+            #dice-and-structure {
+                flex-direction: column;
+                align-items: center;
+            }
+            #structure-panel {
+                flex: 0 0 auto;
+                width: 100%;
+                max-width: 400px;
+                min-height: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <h1>Maxi Yatzy</h1>
+        <p>选择游戏模式开始挑战</p>
+        <button class="mode-btn" onclick="startGame('normal')">普通模式</button>
+        <button class="mode-btn" onclick="startGame('triple')">三倍模式</button>
+    </div>
+
+    <div id="game-screen">
+        <div id="status-bar">
+            <span id="mode-label">普通模式</span>
+            <span id="turn-label">已计分：0 / 20</span>
+            <span id="reroll-label">重投机会：2</span>
+        </div>
+
+        <div id="dice-and-structure">
+            <div id="dice-container"></div>
+            <div id="structure-panel">
+                <div id="structure-name"></div>
+            </div>
+        </div>
+
+        <div id="dice-actions">
+            <button class="action-btn" id="roll-btn" onclick="rollDice()">投掷骰子</button>
+            <button class="action-btn" id="reroll-btn" onclick="rerollSelected()">重投未保留的骰子</button>
+        </div>
+
+        <div id="scoreboards"></div>
+    </div>
+
+    <script>
+        const COMBOS = [
+            { key: 'ones', name: '一点', desc: '所有显示为"1"的骰子点数之和', type: 'upper' },
+            { key: 'twos', name: '二点', desc: '所有显示为"2"的骰子点数之和', type: 'upper' },
+            { key: 'threes', name: '三点', desc: '所有显示为"3"的骰子点数之和', type: 'upper' },
+            { key: 'fours', name: '四点', desc: '所有显示为"4"的骰子点数之和', type: 'upper' },
+            { key: 'fives', name: '五点', desc: '所有显示为"5"的骰子点数之和', type: 'upper' },
+            { key: 'sixes', name: '六点', desc: '所有显示为"6"的骰子点数之和', type: 'upper' },
+            { key: 'onePair', name: '一对', desc: '两个点数相同的骰子', type: 'lower' },
+            { key: 'twoPairs', name: '两对', desc: '两个不同点数的对子', type: 'lower' },
+            { key: 'threePairs', name: '三对', desc: '三个不同点数的对子', type: 'lower' },
+            { key: 'threeOfAKind', name: '三条', desc: '三个点数相同的骰子', type: 'lower' },
+            { key: 'fourOfAKind', name: '四条', desc: '四个点数相同的骰子', type: 'lower' },
+            { key: 'fiveOfAKind', name: '五条', desc: '五个点数相同的骰子', type: 'lower' },
+            { key: 'smallStraight', name: '小顺子', desc: '骰子组合为1-2-3-4-5', type: 'lower' },
+            { key: 'largeStraight', name: '大顺子', desc: '骰子组合为2-3-4-5-6', type: 'lower' },
+            { key: 'fullStraight', name: '全顺子', desc: '骰子组合为1-2-3-4-5-6', type: 'lower' },
+            { key: 'fullHouse', name: '葫芦', desc: '一个三条加一个一对', type: 'lower' },
+            { key: 'castle', name: '城堡', desc: '两个不同的三条', type: 'lower' },
+            { key: 'tower', name: '塔', desc: '一个四条加一个一对（需不同）', type: 'lower' },
+            { key: 'chance', name: '机会', desc: '任意组合', type: 'lower' },
+            { key: 'maxiYatzy', name: 'Maxi Yatzy', desc: '六个骰子点数全部相同', type: 'lower' }
+        ];
+
+        const UPPER_KEYS = ['ones', 'twos', 'threes', 'fours', 'fives', 'sixes'];
+        const BONUS_REQUIREMENT = 84;
+        const BONUS_SCORE = 100;
+
+        let mode = null;
+        let columns = [];
+        let dice = [];
+        let keep = [false, false, false, false, false, false];
+        let rolled = false;
+        let rerollPool = 0;
+        let turn = 0;
+        let totalCells = 0;
+        let gameOver = false;
+        let totalScore = 0;
+
+        function createColumn(multiplier) {
+            const cells = {};
+            COMBOS.forEach(c => { cells[c.key] = null; });
+            return {
+                multiplier,
+                cells,
+                bonusAwarded: false,
+                bonusScore: 0,
+                baseUpperSum: 0,
+                baseLowerSum: 0
+            };
+        }
+
+        function columnTotal(col) {
+            return (col.baseUpperSum + col.baseLowerSum + col.bonusScore) * col.multiplier;
+        }
+
+        function countDice(arr) {
+            const count = Array(7).fill(0);
+            arr.forEach(v => { count[v]++; });
+            return count;
+        }
+
+        function sumDice(arr) {
+            return arr.reduce((a, b) => a + b, 0);
+        }
+
+        function calcScore(key, diceArr) {
+            const count = countDice(diceArr);
+            const sum = sumDice(diceArr);
+
+            switch (key) {
+                case 'ones': return count[1] * 1;
+                case 'twos': return count[2] * 2;
+                case 'threes': return count[3] * 3;
+                case 'fours': return count[4] * 4;
+                case 'fives': return count[5] * 5;
+                case 'sixes': return count[6] * 6;
+                case 'onePair': {
+                    for (let i = 6; i >= 1; i--) if (count[i] >= 2) return i * 2;
+                    return 0;
+                }
+                case 'twoPairs': {
+                    const pairs = [];
+                    for (let i = 6; i >= 1; i--) if (count[i] >= 2) pairs.push(i);
+                    if (pairs.length >= 2) return pairs[0] * 2 + pairs[1] * 2;
+                    return 0;
+                }
+                case 'threePairs': {
+                    const pairs = [];
+                    for (let i = 1; i <= 6; i++) if (count[i] === 2) pairs.push(i);
+                    if (pairs.length === 3) return sum;
+                    return 0;
+                }
+                case 'threeOfAKind': {
+                    for (let i = 6; i >= 1; i--) if (count[i] >= 3) return i * 3;
+                    return 0;
+                }
+                case 'fourOfAKind': {
+                    for (let i = 6; i >= 1; i--) if (count[i] >= 4) return i * 4;
+                    return 0;
+                }
+                case 'fiveOfAKind': {
+                    for (let i = 6; i >= 1; i--) if (count[i] >= 5) return i * 5;
+                    return 0;
+                }
+                case 'smallStraight': {
+                    const needed = [1,2,3,4,5];
+                    if (needed.every(v => count[v] >= 1)) return 15;
+                    return 0;
+                }
+                case 'largeStraight': {
+                    const needed = [2,3,4,5,6];
+                    if (needed.every(v => count[v] >= 1)) return 20;
+                    return 0;
+                }
+                case 'fullStraight': {
+                    const needed = [1,2,3,4,5,6];
+                    if (needed.every(v => count[v] >= 1)) return 21;
+                    return 0;
+                }
+                case 'fullHouse': {
+                    let best = 0;
+                    for (let i = 1; i <= 6; i++) {
+                        for (let j = 1; j <= 6; j++) {
+                            if (i !== j && count[i] >= 3 && count[j] >= 2) {
+                                best = Math.max(best, i*3 + j*2);
+                            }
+                        }
+                    }
+                    return best;
+                }
+                case 'castle': {
+                    for (let i = 1; i <= 6; i++) {
+                        for (let j = i+1; j <= 6; j++) {
+                            if (count[i] >= 3 && count[j] >= 3) return sum;
+                        }
+                    }
+                    return 0;
+                }
+                case 'tower': {
+                    for (let i = 1; i <= 6; i++) {
+                        for (let j = 1; j <= 6; j++) {
+                            if (i !== j && count[i] >= 4 && count[j] >= 2) return sum;
+                        }
+                    }
+                    return 0;
+                }
+                case 'chance': return sum;
+                case 'maxiYatzy': {
+                    for (let i = 1; i <= 6; i++) if (count[i] === 6) return 100;
+                    return 0;
+                }
+                default: return 0;
+            }
+        }
+
+        function checkAndAwardBonus(col) {
+            if (col.bonusAwarded) return;
+            const allFilled = UPPER_KEYS.every(k => col.cells[k] !== null);
+            if (allFilled && col.baseUpperSum >= BONUS_REQUIREMENT) {
+                col.bonusAwarded = true;
+                col.bonusScore = BONUS_SCORE;
+            }
+        }
+
+        function startGame(selectedMode) {
+            mode = selectedMode;
+            columns = mode === 'normal' ?
+                [createColumn(1)] :
+                [createColumn(1), createColumn(2), createColumn(3)];
+            totalCells = mode === 'normal' ? 20 : 60;
+            dice = [];
+            keep = [false, false, false, false, false, false];
+            rolled = false;
+            rerollPool = 2;
+            turn = 0;
+            gameOver = false;
+            totalScore = 0;
+
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            render();
+        }
+
+        function rollDice() {
+            if (rolled || gameOver) return;
+            dice = Array.from({ length: 6 }, () => Math.floor(Math.random() * 6) + 1);
+            rolled = true;
+            keep = [false, false, false, false, false, false];
+            render();
+        }
+
+        function rerollSelected() {
+            if (!rolled || gameOver || rerollPool <= 0) return;
+            rerollPool--;
+            for (let i = 0; i < 6; i++) {
+                if (!keep[i]) {
+                    dice[i] = Math.floor(Math.random() * 6) + 1;
+                }
+            }
+            render();
+        }
+
+        function toggleKeep(index) {
+            if (!rolled || gameOver) return;
+            keep[index] = !keep[index];
+            render();
+        }
+
+        function scoreColumn(colIndex, key) {
+            if (gameOver || !rolled) return;
+            const col = columns[colIndex];
+            if (col.cells[key] !== null) return;
+
+            const points = calcScore(key, dice);
+            col.cells[key] = points;
+
+            const combo = COMBOS.find(c => c.key === key);
+            if (combo.type === 'upper') {
+                col.baseUpperSum += points;
+            } else {
+                col.baseLowerSum += points;
+            }
+
+            checkAndAwardBonus(col);
+
+            turn++;
+            if (turn >= totalCells) {
+                gameOver = true;
+                calculateTotalScore();
+            } else {
+                rolled = false;
+                dice = [];
+                keep = [false, false, false, false, false, false];
+                rerollPool += 2;
+            }
+            render();
+        }
+
+        function calculateTotalScore() {
+            totalScore = columns.reduce((sum, col) => sum + columnTotal(col), 0);
+        }
+
+        function resetToStart() {
+            mode = null;
+            columns = [];
+            dice = [];
+            keep = [false, false, false, false, false, false];
+            rolled = false;
+            rerollPool = 0;
+            turn = 0;
+            totalCells = 0;
+            gameOver = false;
+            totalScore = 0;
+
+            document.getElementById('start-screen').style.display = 'block';
+            document.getElementById('game-screen').style.display = 'none';
+        }
+
+        function getPrimaryStructureName(diceArr) {
+            const lowerCombos = COMBOS.filter(c => c.type === 'lower' && c.key !== 'chance').reverse();
+            for (const combo of lowerCombos) {
+                if (calcScore(combo.key, diceArr) > 0) {
+                    return combo.name;
+                }
+            }
+            return null;
+        }
+
+        function render() {
+            document.getElementById('mode-label').textContent = mode === 'normal' ? '普通模式' : '三倍模式';
+            document.getElementById('turn-label').textContent = `已计分：${turn} / ${totalCells}`;
+            document.getElementById('reroll-label').textContent = `重投机会：${rerollPool}`;
+
+            const diceContainer = document.getElementById('dice-container');
+            const diceActions = document.getElementById('dice-actions');
+            const structurePanel = document.getElementById('structure-panel');
+            const structureName = document.getElementById('structure-name');
+
+            if (gameOver) {
+                diceContainer.innerHTML = `
+                    <div style="text-align:center; padding: 20px; width:100%;">
+                        <div style="font-size:2rem; font-weight:bold; color:#f5d67b;">游戏结束</div>
+                        <div style="font-size:2.5rem; font-weight:bold; color:#ffffff; margin-top:10px;">总分：${totalScore}</div>
+                    </div>
+                `;
+                diceActions.innerHTML = `<button class="action-btn" onclick="resetToStart()">重玩一局</button>`;
+                structurePanel.style.display = 'none';
+            } else {
+                diceContainer.innerHTML = '';
+                for (let i = 0; i < 6; i++) {
+                    const die = document.createElement('div');
+                    die.className = 'die';
+                    if (!rolled) die.classList.add('unrolled');
+                    if (rolled && keep[i]) die.classList.add('kept');
+                    die.textContent = rolled ? dice[i] : '?';
+                    if (rolled) {
+                        die.addEventListener('click', () => toggleKeep(i));
+                    }
+                    diceContainer.appendChild(die);
+                }
+
+                diceActions.innerHTML = `
+                    <button class="action-btn" id="roll-btn" onclick="rollDice()" ${rolled || gameOver ? 'disabled' : ''}>投掷骰子</button>
+                    <button class="action-btn" id="reroll-btn" onclick="rerollSelected()" ${!rolled || rerollPool <= 0 || gameOver ? 'disabled' : ''}>重投未保留的骰子</button>
+                `;
+
+                if (rolled && !gameOver) {
+                    const primary = getPrimaryStructureName(dice);
+                    structureName.textContent = primary ? primary : '无结构';
+                    structurePanel.style.display = 'flex';
+                } else {
+                    structurePanel.style.display = 'none';
+                }
+            }
+
+            const container = document.getElementById('scoreboards');
+            container.innerHTML = '';
+            columns.forEach((col, ci) => {
+                let tableHtml = '<table class="score-table">';
+                if (mode === 'triple') {
+                    const labels = ['第一列 ×1', '第二列 ×2', '第三列 ×3'];
+                    tableHtml += `<caption>${labels[ci]}</caption>`;
+                } else {
+                    tableHtml += '<caption>计分表</caption>';
+                }
+
+                if (mode === 'triple' && ci >= 1) {
+                    tableHtml += '<thead><tr><th>组合</th><th>得分</th></tr></thead><tbody>';
+                } else {
+                    tableHtml += '<thead><tr><th>组合</th><th>说明</th><th>得分</th></tr></thead><tbody>';
+                }
+
+                COMBOS.forEach(combo => {
+                    const val = col.cells[combo.key];
+                    const canFill = rolled && !gameOver && val === null;
+                    let displayVal;
+                    let potentialClass = '';
+
+                    if (val !== null) {
+                        displayVal = val;
+                    } else if (rolled && !gameOver) {
+                        const potentialScore = calcScore(combo.key, dice);
+                        displayVal = `(${potentialScore})`;
+                        potentialClass = 'potential';
+                    } else {
+                        displayVal = '-';
+                    }
+
+                    const onclickAttr = canFill ? `onclick="scoreColumn(${ci}, '${combo.key}')"` : '';
+                    const rowClass = canFill ? 'fillable' : 'disabled';
+
+                    if (mode === 'triple' && ci >= 1) {
+                        tableHtml += `<tr class="${rowClass}" ${onclickAttr}>`;
+                        tableHtml += `<td>${combo.name}</td>`;
+                        tableHtml += `<td class="${potentialClass}">${displayVal}</td>`;
+                        tableHtml += '</tr>';
+                    } else {
+                        tableHtml += `<tr class="${rowClass}" ${onclickAttr}>`;
+                        tableHtml += `<td>${combo.name}</td>`;
+                        tableHtml += `<td class="desc">${combo.desc}</td>`;
+                        tableHtml += `<td class="${potentialClass}">${displayVal}</td>`;
+                        tableHtml += '</tr>';
+                    }
+                });
+
+                const upperFilled = UPPER_KEYS.every(k => col.cells[k] !== null);
+                const bonusDisplay = col.bonusAwarded ? '+100' : (upperFilled ? '0（未达到84）' : '');
+                if (mode === 'triple' && ci >= 1) {
+                    tableHtml += `<tr class="summary-row"><td>上区基础分</td><td>${col.baseUpperSum}</td></tr>`;
+                    tableHtml += `<tr class="summary-row"><td>上区奖励</td><td>${bonusDisplay}</td></tr>`;
+                    tableHtml += `<tr class="summary-row"><td>下区基础分</td><td>${col.baseLowerSum}</td></tr>`;
+                    tableHtml += `<tr class="summary-row total"><td>列总分（×${col.multiplier}）</td><td>${columnTotal(col)}</td></tr>`;
+                } else {
+                    tableHtml += `<tr class="summary-row"><td colspan="2">上区基础分</td><td>${col.baseUpperSum}</td></tr>`;
+                    tableHtml += `<tr class="summary-row"><td colspan="2">上区奖励</td><td>${bonusDisplay}</td></tr>`;
+                    tableHtml += `<tr class="summary-row"><td colspan="2">下区基础分</td><td>${col.baseLowerSum}</td></tr>`;
+                    tableHtml += `<tr class="summary-row total"><td colspan="2">列总分（×${col.multiplier}）</td><td>${columnTotal(col)}</td></tr>`;
+                }
+
+                tableHtml += '</tbody></table>';
+                container.insertAdjacentHTML('beforeend', tableHtml);
+            });
+        }
+
+        document.getElementById('game-screen').style.display = 'none';
+        document.getElementById('start-screen').style.display = 'block';
+    </script>
+</body>
+</html>
